@@ -1,7 +1,13 @@
 #!/bin/sh
 set -e
 
-source bootstraps.sh
+PWD=$(dirname $(readlink -f "$0"))
+
+if [ -d "${SETUP_ENV:=${PWD}/setup-env.d}" ]; then
+    for SCRIPT in $(ls "${SETUP_ENV}/"[0-9]*.sh | sort); do
+        source ${SCRIPT}
+    done
+fi
 
 # 安装 Docker
 install_docker() {
