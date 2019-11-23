@@ -29,6 +29,10 @@ install_aliyun_cloud() {
 		Environment="KUBELET_EXTRA_ARGS=--hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
 	EOF
 
+    kubectl -n kube-system get ds kube-proxy -o yaml |
+        sed "s/- --hostname-override=.*/- --hostname-override=${REGION_ID}.${INSTANCE_ID}/" |
+        kubectl -n kube-system apply -f -
+
     run_as_root systemctl daemon-reload
     run_as_root systemctl enable kubelet
     run_as_root systemctl restart kubelet
