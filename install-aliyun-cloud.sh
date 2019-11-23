@@ -21,12 +21,14 @@ install_aliyun_cloud() {
         fatal "ACCESS_KEY_SECRET must be provided"
     fi
 
-    # META_EP=http://100.100.100.200/latest/meta-data
-    # REGION_ID=$(curl -s $META_EP/region-id)
-    # INSTANCE_ID=$(curl -s $META_EP/instance-id)
+    META_EP=http://100.100.100.200/latest/meta-data
+    REGION_ID=$(curl -s $META_EP/region-id)
+    INSTANCE_ID=$(curl -s $META_EP/instance-id)
 
-    # run_as_root mkdir -p /etc/sysconfig/
-    # run_as_root echo "KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}" >/etc/sysconfig/kubelet
+    hostnamectl set-hostname ${REGION_ID}.${INSTANCE_ID}
+
+    run_as_root mkdir -p /etc/sysconfig/
+    run_as_root echo "KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}" >/etc/sysconfig/kubelet
 
     # kubectl -n kube-system get ds kube-proxy -o yaml |
         # sed "s/- --hostname-override=.*/- --hostname-override=${REGION_ID}.${INSTANCE_ID}/" |
