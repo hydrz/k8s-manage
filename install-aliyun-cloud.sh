@@ -24,10 +24,9 @@ install_aliyun_cloud() {
     META_EP=http://100.100.100.200/latest/meta-data
     REGION_ID=$(curl -s $META_EP/region-id)
     INSTANCE_ID=$(curl -s $META_EP/instance-id)
-    run_as_root cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/5-aliyun.conf
-		[Service]
-		Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
-	EOF
+
+    run_as_root mkdir -p /etc/sysconfig/
+    run_as_root echo "KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}" >/etc/sysconfig/kubelet
 
     kubectl -n kube-system get ds kube-proxy -o yaml |
         sed "s/- --hostname-override=.*/- --hostname-override=${REGION_ID}.${INSTANCE_ID}/" |
@@ -51,7 +50,7 @@ install_aliyun_cloud() {
     kubectl --namespace kube-system create configmap cloud-controller-manager \
         --from-file=cloud-controller-manager.conf=/etc/kubernetes/controller-manager.conf
 
-    cat ${PWD}/yaml/cloud-controller-manager.yml |
+    cat ${PWD}/config/cloud-controller-manager.yml |
         sed "s?\${CLUSTER_CIDR}?${CLUSTER_CIDR}?" |
         kubectl apply -f -
 }
