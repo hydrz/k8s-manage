@@ -12,15 +12,14 @@ fi
 # 安装 kubelet kubeadm kubectl
 install_k8s_base() {
     info "install kubelet kubeadm kubectl..."
-    run_as_root '/sbin/swapoff -a'
 
     case "${LSB_DIST}" in
     ubuntu | debian | raspbian)
         apt_repo="deb [arch=${ARCH}] https://mirrors.aliyun.com/kubernetes/apt/ kubernetes-xenial main"
         (
-            run_as_root "curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add - "
-            run_as_root "echo $apt_repo >/etc/apt/sources.list.d/kubernetes.list"
-            run_as_root 'apt-get update'
+            run_as_root curl https://mirrors.aliyun.com/kubernetes/apt/doc/apt-key.gpg | apt-key add -
+            run_as_root echo $apt_repo >/etc/apt/sources.list.d/kubernetes.list
+            run_as_root apt-get update
         )
 
         local pkg_version=""
@@ -35,7 +34,7 @@ install_k8s_base() {
             fi
         fi
 
-        run_as_root "apt-get install -y --no-install-recommends kubelet=$pkg_version kubeadm=$pkg_version kubectl=$pkg_version"
+        run_as_root apt-get install -y --no-install-recommends kubelet=$pkg_version kubeadm=$pkg_version kubectl=$pkg_version
         ;;
 
     centos | fedora)
@@ -47,7 +46,7 @@ install_k8s_base() {
             local config_manager="yum-config-manager"
         fi
 
-        run_as_root "cat <<-EOF >/etc/yum.repos.d/kubernetes.repo
+        run_as_root cat <<-EOF >/etc/yum.repos.d/kubernetes.repo
 			[kubernetes]
 			name=Kubernetes
 			baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
@@ -55,15 +54,15 @@ install_k8s_base() {
 			gpgcheck=1
 			repo_gpgcheck=1
 			gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
-		EOF"
+		EOF
 
-        run_as_root "$pkg_manager makecache"
+        run_as_root $pkg_manager makecache
 
         local pkg_version=""
         if [ -n "${K8S_VERSION}" ]; then
             local pkg_pattern="$(echo "${K8S_VERSION}" | sed "s/-/.*/g").*-0"
             local search_command="$pkg_manager list --showduplicates 'kubeadm' | grep '$pkg_pattern' | tail -1 | awk '{print \$2}'"
-            pkg_version="$(run_as_root "$search_command")"
+            pkg_version="$(run_as_root $search_command)"
             info "Searching repository for K8S_VERSION '${K8S_VERSION}'"
             info "$search_command"
             if [ -z "$pkg_version" ]; then
@@ -73,7 +72,7 @@ install_k8s_base() {
             pkg_version="$(echo "$pkg_version" | cut -d':' -f 2)"
         fi
 
-        run_as_root "$pkg_manager install -y kubelet-$pkg_version kubeadm-$pkg_version kubectl-$pkg_version"
+        run_as_root $pkg_manager install -y kubelet-$pkg_version kubeadm-$pkg_version kubectl-$pkg_version
         ;;
     *)
         fatal "Unsupported distribution '${LSB_DIST}'"

@@ -24,14 +24,10 @@ install_aliyun_cloud() {
     META_EP=http://100.100.100.200/latest/meta-data
     REGION_ID=$(curl -s $META_EP/region-id)
     INSTANCE_ID=$(curl -s $META_EP/instance-id)
-    cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/20-aliyun.conf
+    run_as_root cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/20-aliyun.conf
 		[Service]
 		Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
 	EOF
-
-    cat ${KUBEADM_INIT_CONFIG} |
-        sed "s?name:.*?name: ${REGION_ID}.${INSTANCE_ID}?" |
-        run_as_root tee ${KUBEADM_INIT_CONFIG} >/dev/null
 
     CA_DATA=$(cat /etc/kubernetes/pki/ca.crt | base64 -w 0)
 
