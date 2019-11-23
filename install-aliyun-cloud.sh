@@ -26,7 +26,7 @@ install_aliyun_cloud() {
     INSTANCE_ID=$(curl -s $META_EP/instance-id)
 
     run_as_root mkdir -p /etc/sysconfig/
-    run_as_root echo "KUBELET_EXTRA_ARGS=--node-name --cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}" >/etc/sysconfig/kubelet
+    run_as_root echo "KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}" >/etc/sysconfig/kubelet
 
     kubectl -n kube-system get ds kube-proxy -o yaml |
         sed "s/- --hostname-override=.*/- --hostname-override=${REGION_ID}.${INSTANCE_ID}/" |
