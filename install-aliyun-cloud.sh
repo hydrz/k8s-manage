@@ -26,10 +26,8 @@ install_aliyun_cloud() {
     INSTANCE_ID=$(curl -s $META_EP/instance-id)
     run_as_root cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/20-aliyun.conf
 		[Service]
-		Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
+		Environment="KUBELET_EXTRA_ARGS=--hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
 	EOF
-
-    CA_DATA=$(cat /etc/kubernetes/pki/ca.crt | base64 -w 0)
 
     cat <<-EOF | kubectl apply -f -
 		apiVersion: v1
@@ -42,39 +40,14 @@ install_aliyun_cloud() {
 		  namespace: kube-system
 	EOF
 
-    cat <<-EOF | kubectl apply -f -
-		apiVersion: v1
-		kind: ConfigMap
-		metadata:
-		  name: cloud-controller-manager
-		  namespace: kube-system
-		data:
-		  cloud-controller-manager.conf: |-
-		    kind: Config
-		    contexts:
-		      - context:
-		          cluster: kubernetes
-		          user: system:cloud-controller-manager
-		          name: system:cloud-controller-manager@kubernetes
-		    current-context: system:cloud-controller-manager@kubernetes
-		    users:
-		      - name: system:cloud-controller-manager
-		        user:
-		        tokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
-		    apiVersion: v1
-		    clusters:
-		      - cluster:
-		          certificate-authority-data: $CA_DATA
-		          server: $(k cluster-info | xargs -n 1 | grep http | head -1)
-		          name: kubernetes
-	EOF
+    MANAGER_CONFIG=$(cat /etc/kubernetes/controller-manager.conf)
+
+    kubectl --namespace kube-system create configmap cloud-controller-manager \
+        --from-file=cloud-controller-manager.conf=/etc/kubernetes/controller-manager.conf
 
     cat ${PWD}/yaml/cloud-controller-manager.yml |
         sed "s?\${CLUSTER_CIDR}?${CLUSTER_CIDR}?" |
         kubectl apply -f -
-
-    # 取消初始化污点
-    # kubectl taint nodes --all node.cloudprovider.kubernetes.io/uninitialized-
 }
 
 install_aliyun_cloud
