@@ -24,9 +24,9 @@ install_aliyun_cloud() {
     META_EP=http://100.100.100.200/latest/meta-data
     REGION_ID=$(curl -s $META_EP/region-id)
     INSTANCE_ID=$(curl -s $META_EP/instance-id)
-    run_as_root cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/20-aliyun.conf
+    run_as_root cat <<-EOF >/usr/lib/systemd/system/kubelet.service.d/5-aliyun.conf
 		[Service]
-		Environment="KUBELET_EXTRA_ARGS=--hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
+		Environment="KUBELET_EXTRA_ARGS=--cloud-provider=external --hostname-override=${REGION_ID}.${INSTANCE_ID} --provider-id=${REGION_ID}.${INSTANCE_ID}"
 	EOF
 
     kubectl -n kube-system get ds kube-proxy -o yaml |
