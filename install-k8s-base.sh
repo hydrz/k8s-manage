@@ -1,6 +1,14 @@
 #!/bin/sh
 set -e
 
+PWD=$(dirname $(readlink -f "$0"))
+
+if [ -d "${SETUP_ENV:=${PWD}/setup-env.d}" ]; then
+    for SCRIPT in $(ls "${SETUP_ENV}/"[0-9]*.sh | sort); do
+        source ${SCRIPT}
+    done
+fi
+
 # 安装 kubelet kubeadm kubectl
 install_k8s_base() {
     info "install kubelet kubeadm kubectl..."
