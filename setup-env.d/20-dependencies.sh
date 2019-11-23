@@ -160,7 +160,7 @@ selinux_disable() {
 # --- 关闭swap ---
 swap_disable() {
     run_as_root swapoff -a
-    run_as_root sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    run_as_root sed -i '/swap/s/^\(.*\)$/#\1/g' /etc/fstab
 }
 
 # --- 关闭防火墙 ---

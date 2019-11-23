@@ -1,5 +1,5 @@
 #!/bin/sh
-# 初始化常用常量
+set -e
 
 # --- 获取公网IP ---
 init_public_ip() {
