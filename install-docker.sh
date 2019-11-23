@@ -36,7 +36,7 @@ install_docker() {
 
     run_as_root mkdir -p /etc/systemd/system/docker.service.d
 
-    # docker_as_nonroot
+    # add current user to group docker
     run_as_root usermod -aG docker $(id -un 2>/dev/null || true)
 
     # Restart

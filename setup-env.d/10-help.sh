@@ -68,21 +68,3 @@ escape() {
 escape_dq() {
     printf '%s' "$@" | sed -e 's/"/\\"/g'
 }
-
-# --- 关闭selinux ---
-selinux_disable() {
-    if command_exists getenforce && [ "$(getenforce)" = "Enabled" ]; then
-        run_as_root 'setenforce 0'
-        run_as_root "sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config"
-        info "Selinux disabled success!"
-    fi
-}
-
-# --- 关闭防火墙 ---
-firewalld_stop() {
-    if [ "$(systemctl is-active firewalld)" = "active" ]; then
-        run_as_root 'systemctl disable firewalld'
-        run_as_root 'systemctl stop firewalld'
-        info "Firewall disabled success!"
-    fi
-}
