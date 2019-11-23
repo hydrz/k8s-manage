@@ -42,7 +42,7 @@ install_aliyun_cloud() {
 		  namespace: kube-system
 	EOF
 
-    cat <<-EOF >/etc/kubernetes/cloud-controller-manager.conf
+    cat <<-EOF | kubectl apply -f -
 		apiVersion: v1
 		kind: ConfigMap
 		metadata:
