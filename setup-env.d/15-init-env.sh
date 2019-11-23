@@ -33,6 +33,115 @@ init_arch() {
     esac
 }
 
+# --- 发行版 ---
+init_lsb() {
+    LSB_DIST=""
+    DIST_VERSION=""
+    # Every system that we officially support has /etc/os-release
+    if [ -r /etc/os-release ]; then
+        LSB_DIST="$(. /etc/os-release && echo "$ID")"
+    fi
+
+    LSB_DIST="$(echo "${LSB_DIST}" | tr '[:upper:]' '[:lower:]')"
+
+    case "${LSB_DIST}" in
+
+    ubuntu)
+        if command_exists lsb_release; then
+            DIST_VERSION="$(lsb_release --codename | cut -f2)"
+        fi
+        if [ -z "${DIST_VERSION}" ] && [ -r /etc/lsb-release ]; then
+            DIST_VERSION="$(. /etc/lsb-release && echo "$DISTRIB_CODENAME")"
+        fi
+        ;;
+
+    debian | raspbian)
+        DIST_VERSION="$(sed 's/\/.*//' /etc/debian_version | sed 's/\..*//')"
+        case "${DIST_VERSION}" in
+        10)
+            DIST_VERSION="buster"
+            ;;
+        9)
+            DIST_VERSION="stretch"
+            ;;
+        8)
+            DIST_VERSION="jessie"
+            ;;
+        esac
+        ;;
+
+    centos)
+        if [ -z "${DIST_VERSION}" ] && [ -r /etc/os-release ]; then
+            DIST_VERSION="$(. /etc/os-release && echo "$DOCKER_VERSION_ID")"
+        fi
+        ;;
+
+    rhel | ol | sles)
+        ee_notice "${LSB_DIST}"
+        exit 1
+        ;;
+
+    *)
+        if command_exists lsb_release; then
+            DIST_VERSION="$(lsb_release --release | cut -f2)"
+        fi
+        if [ -z "${DIST_VERSION}" ] && [ -r /etc/os-release ]; then
+            DIST_VERSION="$(. /etc/os-release && echo "$DOCKER_VERSION_ID")"
+        fi
+        ;;
+
+    esac
+
+    # 检查发行版分支
+    # Check for lsb_release command existence, it usually exists in forked distros
+    if command_exists lsb_release; then
+        # Check if the `-u` option is supported
+        set +e
+        lsb_release -a -u >/dev/null 2>&1
+        lsb_release_exit_code=$?
+        set -e
+
+        # Check if the command has exited successfully, it means we're in a forked distro
+        if [ "$lsb_release_exit_code" = "0" ]; then
+            # Print info about current distro
+            cat <<-EOF
+			You're using '${LSB_DIST}' version '${DIST_VERSION}'.
+			EOF
+
+            # Get the upstream release info
+            LSB_DIST=$(lsb_release -a -u 2>&1 | tr '[:upper:]' '[:lower:]' | grep -E 'id' | cut -d ':' -f 2 | tr -d '[:space:]')
+            DIST_VERSION=$(lsb_release -a -u 2>&1 | tr '[:upper:]' '[:lower:]' | grep -E 'codename' | cut -d ':' -f 2 | tr -d '[:space:]')
+
+            # Print info about upstream distro
+            cat <<-EOF
+			Upstream release is '${LSB_DIST}' version '${DIST_VERSION}'.
+			EOF
+        else
+            if [ -r /etc/debian_version ] && [ "${LSB_DIST}" != "ubuntu" ] && [ "${LSB_DIST}" != "raspbian" ]; then
+                if [ "${LSB_DIST}" = "osmc" ]; then
+                    # OSMC runs Raspbian
+                    LSB_DIST=raspbian
+                else
+                    # We're Debian and don't even know it!
+                    LSB_DIST=debian
+                fi
+                DIST_VERSION="$(sed 's/\/.*//' /etc/debian_version | sed 's/\..*//')"
+                case "${DIST_VERSION}" in
+                10)
+                    DIST_VERSION="buster"
+                    ;;
+                9)
+                    DIST_VERSION="stretch"
+                    ;;
+                8 | 'Kali Linux 2')
+                    DIST_VERSION="jessie"
+                    ;;
+                esac
+            fi
+        fi
+    fi
+}
+
 init_public_ip
 init_os
 init_arch
