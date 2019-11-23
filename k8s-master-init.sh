@@ -15,8 +15,6 @@ init_k8s() {
 
     run_as_root mkdir -p /etc/kubernetes
 
-    init_public_ip
-
     CLUSTER_DNS=$(echo ${SERVICE_CIDR} | awk -F '/' '{print $1}' | awk -F '.' '{print $1"."$2"."$3".""10"}')
 
     KUBEADM_INIT_CONFIG="/etc/kubernetes/kubelet.yaml"
