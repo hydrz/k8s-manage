@@ -44,8 +44,6 @@ install_aliyun_cloud() {
 		  namespace: kube-system
 	EOF
 
-    MANAGER_CONFIG=$(cat /etc/kubernetes/controller-manager.conf)
-
     kubectl --namespace kube-system create configmap cloud-controller-manager \
         --from-file=cloud-controller-manager.conf=/etc/kubernetes/controller-manager.conf
 
